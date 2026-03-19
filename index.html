@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskBoard – Mis TODOs</title>
+  <meta name="description" content="Aplicación de gestión de tareas con etiquetas, búsqueda y diseño glass sobre terrazo." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== SIDEBAR / HAMBURGER MENU ===== -->
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Filtrar por etiqueta</span>
+      <button id="close-sidebar" class="icon-btn" aria-label="Cerrar menú">✕</button>
+    </div>
+    <ul id="label-filter-list" class="label-filter-list">
+      <li>
+        <button class="label-filter-btn active" data-label="all" id="filter-all">
+          <span class="dot dot-all"></span> Todas las tarjetas
+        </button>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- ===== HEADER ===== -->
+  <header class="app-header">
+    <div class="header-left">
+      <button id="hamburger-btn" class="icon-btn hamburger-btn" aria-label="Abrir menú">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="logo">
+        <span class="logo-icon">📋</span>
+        <span class="logo-text">TaskBoard</span>
+      </div>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        id="search-input"
+        class="search-input"
+        placeholder="Buscar tareas..."
+        aria-label="Buscar tareas"
+      />
+    </div>
+    <button id="add-todo-btn" class="primary-btn" id="btn-add-new">
+      <span>+ Nueva tarea</span>
+    </button>
+  </header>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="main-content">
+
+    <!-- Active label filter indicator -->
+    <div id="active-filter-bar" class="active-filter-bar hidden">
+      <span id="active-filter-text">Todas las tarjetas</span>
+      <button id="clear-filter-btn" class="clear-filter-btn">✕ Limpiar filtro</button>
+    </div>
+
+    <!-- Cards grid -->
+    <div id="todo-grid" class="todo-grid">
+      <!-- Cards rendered by JS -->
+    </div>
+
+    <!-- Empty state -->
+    <div id="empty-state" class="empty-state hidden">
+      <div class="empty-icon">🌿</div>
+      <p class="empty-title">No hay tareas todavía</p>
+      <p class="empty-sub">Presiona <strong>+ Nueva tarea</strong> para empezar</p>
+    </div>
+
+    <!-- Loading state -->
+    <div id="loading-state" class="loading-state">
+      <div class="spinner"></div>
+      <p>Cargando tareas…</p>
+    </div>
+  </main>
+
+  <!-- ===== MODAL: ADD/EDIT TODO ===== -->
+  <div id="todo-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 id="modal-title">Nueva tarea</h2>
+        <button id="close-modal-btn" class="icon-btn" aria-label="Cerrar modal">✕</button>
+      </div>
+      <form id="todo-form" novalidate>
+        <div class="form-group">
+          <label for="todo-title">Título <span class="required">*</span></label>
+          <input type="text" id="todo-title" placeholder="¿Qué hay que hacer?" required maxlength="120" />
+          <small class="field-hint">Máx. 120 caracteres</small>
+        </div>
+        <div class="form-group">
+          <label for="todo-description">Descripción</label>
+          <textarea id="todo-description" placeholder="Detalla la tarea (opcional)…" rows="3" maxlength="500"></textarea>
+        </div>
+
+        <!-- ── CHECKLIST ── -->
+        <div class="form-group">
+          <label>Subtareas <span class="checklist-count-badge" id="checklist-count-badge"></span></label>
+          <div class="checklist-add-row">
+            <input
+              type="text"
+              id="checklist-new-item"
+              class="checklist-new-input"
+              placeholder="Agregar subtarea y presionar Enter…"
+              autocomplete="off"
+              maxlength="200"
+            />
+            <button type="button" id="checklist-add-btn" class="checklist-add-btn" aria-label="Agregar subtarea">＋</button>
+          </div>
+          <ul id="checklist-form-list" class="checklist-form-list">
+            <!-- Items rendered by JS -->
+          </ul>
+        </div>
+
+        <div class="form-group">
+          <label>Etiquetas</label>
+          <div class="tag-input-wrap">
+            <div id="selected-tags" class="selected-tags"></div>
+            <input
+              type="text"
+              id="tag-input"
+              class="tag-input"
+              placeholder="Escribe y presiona Enter o coma…"
+              autocomplete="off"
+            />
+          </div>
+          <div id="tag-suggestions" class="tag-suggestions hidden"></div>
+          <small class="field-hint">Presiona <kbd>Enter</kbd> o <kbd>,</kbd> para agregar</small>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="cancel-modal-btn" class="secondary-btn">Cancelar</button>
+          <button type="submit" class="primary-btn" id="save-todo-btn">Guardar tarea</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: CARD DETAIL ===== -->
+  <div id="card-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="card-modal-title">
+    <div class="modal-box card-detail-box">
+      <div class="modal-header">
+        <h2 id="card-modal-title">Detalle de tarea</h2>
+        <button id="close-card-modal-btn" class="icon-btn" aria-label="Cerrar modal">✕</button>
+      </div>
+      <div id="card-detail-content" class="card-detail-content">
+        <!-- Filled by JS -->
+      </div>
+      <div class="modal-actions card-detail-actions">
+        <button id="delete-todo-btn" class="danger-btn">🗑 Eliminar</button>
+        <button id="edit-todo-btn" class="secondary-btn">✏️ Editar</button>
+        <button id="toggle-done-btn" class="primary-btn">✔ Marcar como hecha</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOAST NOTIFICATION ===== -->
+  <div id="toast" class="toast hidden" role="alert" aria-live="polite"></div>
+
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
